@@ -10,6 +10,7 @@
 
 #include "BaseForce.h"
 #include "MutualCrooksTrap.h"
+#include <vector>
 
 // Forward declaration for buffer file operations
 void appendBufferToFile(const std::string& filename, number* force_buffer, number* extension_buffer, int step);
@@ -27,10 +28,9 @@ public:
     number _rate;
     number _stiff_rate;
     string _file_path;
-    number _force_buffer[100000];
-    number _extension_buffer[100000];
-    float _single_force_buffer[100000];
-    float _single_extension_buffer[100000];
+    int _buffer_size;
+    std::vector<float> _force_buffer;
+    std::vector<float> _extension_buffer;
     bool saved_last_step;
     llint last_step;
     int _sum_steps;

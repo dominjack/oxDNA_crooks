@@ -39,11 +39,12 @@ std::tuple<std::vector<int>, std::string> MutualCrooksTrap::init(input_file &inp
     _stiff_rate = 0.f; //default stiff_rate is 0
     getInputNumber(&inp, "stiff_rate", &_stiff_rate, 0);
     getInputString(&inp, "file_path", _file_path, 1);
-    _sum_steps = 1; //default stiff_rate is 0
+    _sum_steps = 1;
     getInputInt(&inp, "sum_steps", &_sum_steps, 0);
-
-    _force_buffer[0] = 0.;
-    _extension_buffer[0] = _r0;
+    _buffer_size = 100000;
+    getInputInt(&inp, "buffer_size", &_buffer_size, 0);
+    _force_buffer.assign(_buffer_size, 0.f);
+    _extension_buffer.assign(_buffer_size, (float) _r0);
 
     int N = CONFIG_INFO->particles().size();
     if(_ref_id < 0 || _ref_id >= N) {
@@ -76,8 +77,8 @@ LR_vector MutualCrooksTrap::value(llint step, LR_vector &pos) {
     LR_vector dr = _distance(pos, CONFIG_INFO->box->get_abs_pos(_p_ptr));
     LR_vector val = (dr / dr.module()) * (dr.module() - (_r0 + (_rate * step))) * (_stiff + (_stiff_rate * step));
 
-    _force_buffer[step%100000] = val * dr/dr.module();
-    _extension_buffer[step%100000] = _r0 + (_rate * step);
+    _force_buffer[step % _buffer_size] = (float) (val * dr / dr.module());
+    _extension_buffer[step % _buffer_size] = (float) (_r0 + (_rate * step));
     
     return val;
 }

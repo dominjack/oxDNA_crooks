@@ -91,7 +91,7 @@ protected:
      */
     template <typename T>
     void _process_crooks_sync(T* cpu_force, c_number* d_force_buf, c_number* d_ext_buf, llint current) {
-        const int buffer_size = 100000;
+        int buffer_size = cpu_force->_buffer_size;
         
         // Handle start of a new window
         if (current % buffer_size == 1) {
@@ -100,9 +100,9 @@ protected:
         }
 
         if (cpu_force && !cpu_force->saved_last_step) {
-            // Blocking memory copy: Syncs GPU with CPU
-            CUDA_SAFE_CALL(cudaMemcpy(cpu_force->_single_force_buffer, d_force_buf, sizeof(c_number) * buffer_size, cudaMemcpyDeviceToHost));
-            CUDA_SAFE_CALL(cudaMemcpy(cpu_force->_single_extension_buffer, d_ext_buf, sizeof(c_number) * buffer_size, cudaMemcpyDeviceToHost));
+            // Blocking memory copy: Syncs GPU with CPU into the unified float vectors
+            CUDA_SAFE_CALL(cudaMemcpy(cpu_force->_force_buffer.data(),     d_force_buf, sizeof(c_number) * buffer_size, cudaMemcpyDeviceToHost));
+            CUDA_SAFE_CALL(cudaMemcpy(cpu_force->_extension_buffer.data(), d_ext_buf,   sizeof(c_number) * buffer_size, cudaMemcpyDeviceToHost));
             
             std::ofstream outputFile(cpu_force->_file_path, std::ios::app);
             if (outputFile.is_open()) {
@@ -110,8 +110,8 @@ protected:
                 number _running_extension = 0.;
                 
                 for (int i = 0; i < buffer_size; i++) {
-                    _running_force += cpu_force->_single_force_buffer[i];
-                    _running_extension += cpu_force->_single_extension_buffer[i];
+                    _running_force += cpu_force->_force_buffer[i];
+                    _running_extension += cpu_force->_extension_buffer[i];
                     
                     if ((i + 1) % (cpu_force->_sum_steps) == 0) {
                         outputFile << std::setprecision(12) 

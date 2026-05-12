@@ -47,7 +47,7 @@ protected:
      */
     template <typename T>
     void _process_crooks_sync_cpu(T* cpu_force, llint current) {
-        const int buffer_size = 100000;
+        int buffer_size = cpu_force->_buffer_size;
         
         if (current % buffer_size == 1) {
             cpu_force->saved_last_step = false;

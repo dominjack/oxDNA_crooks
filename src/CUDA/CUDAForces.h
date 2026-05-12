@@ -449,6 +449,7 @@ struct Moving_Crooks_COM_force {
     int *com_indexes;
 	c_number *force_buffer;
 	c_number *extension_buffer;
+	int buffer_size;
 	int sum_steps;
 	bool *saved_last_step;
 	llint *last_step;
@@ -463,7 +464,7 @@ void init_Moving_Crooks_COMForce_from_CPU(Moving_Crooks_COM_force *cuda_force, M
 	cuda_force->rate = cpu_force->_rate;
 	cuda_force->n_com = cpu_force->_com_list.size();
 	cuda_force->force_multiplication_vector = make_float3(cpu_force->_force_multiplication_vector.x, cpu_force->_force_multiplication_vector.y, cpu_force->_force_multiplication_vector.z);
-
+	cuda_force->buffer_size = cpu_force->_buffer_size;
 
 	std::vector<int> local_com_indexes;
 	for(auto particle : cpu_force->_com_list) {
@@ -471,15 +472,13 @@ void init_Moving_Crooks_COMForce_from_CPU(Moving_Crooks_COM_force *cuda_force, M
 	}
 
 	if(first_time) {
-		// Allocate GPU memory for buffers
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * 100000));
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * 100000));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * cpu_force->_buffer_size));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * cpu_force->_buffer_size));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<bool>(&cuda_force->saved_last_step, sizeof(bool)));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<llint>(&cuda_force->last_step, sizeof(llint)));
 
 		cpu_force->cuda_force = cuda_force;
 
-		// Initialize values
 		bool saved_init = cpu_force->saved_last_step;
 		llint last_init = cpu_force->last_step;
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->saved_last_step, &saved_init, sizeof(bool), cudaMemcpyHostToDevice));
@@ -641,6 +640,7 @@ struct moving_crooks_trap {
 	float3 dir;
 	c_number *force_buffer;
 	c_number *extension_buffer;
+	int buffer_size;
 	int sum_steps;
 	bool *saved_last_step;
 	llint *last_step;
@@ -653,26 +653,21 @@ void init_MovingCrooksTrap_from_CPU(moving_crooks_trap *cuda_force, MovingCrooks
 	cuda_force->pos0 = make_float3(cpu_force->_pos0.x, cpu_force->_pos0.y, cpu_force->_pos0.z);
 	cuda_force->dir = make_float3(cpu_force->_direction.x, cpu_force->_direction.y, cpu_force->_direction.z);
 	cuda_force->sum_steps = cpu_force->_sum_steps;
-	
+	cuda_force->buffer_size = cpu_force->_buffer_size;
 
 	if(first_time) {
-		// Allocate GPU memory for buffers
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * 100000));
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * 100000));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * cpu_force->_buffer_size));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * cpu_force->_buffer_size));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<bool>(&cuda_force->saved_last_step, sizeof(bool)));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<llint>(&cuda_force->last_step, sizeof(llint)));
 
 		cpu_force->cuda_force = cuda_force;
 
-		// Initialize values
 		bool saved_init = cpu_force->saved_last_step;
 		llint last_init = cpu_force->last_step;
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->saved_last_step, &saved_init, sizeof(bool), cudaMemcpyHostToDevice));
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->last_step, &last_init, sizeof(llint), cudaMemcpyHostToDevice));
-		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->force_buffer, cpu_force->_force_buffer, sizeof(c_number) * 100000, cudaMemcpyHostToDevice));
-		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->extension_buffer, cpu_force->_extension_buffer, sizeof(c_number) * 100000, cudaMemcpyHostToDevice));
 	} else {
-		// Update values
 		bool saved_val = cpu_force->saved_last_step;
 		llint last_val = cpu_force->last_step;
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->saved_last_step, &saved_val, sizeof(bool), cudaMemcpyHostToDevice));
@@ -694,6 +689,7 @@ struct mutual_crooks_trap {
 	c_number stiff_rate;
 	c_number *force_buffer;
 	c_number *extension_buffer;
+	int buffer_size;
 	int sum_steps;
 	bool *saved_last_step;
 	llint *last_step;
@@ -708,25 +704,21 @@ void init_MovingCrooksTrap_from_CPU(mutual_crooks_trap *cuda_force, MutualCrooks
 	cuda_force->p_ind = cpu_force->_p_ptr->index;
 	cuda_force->PBC = cpu_force->PBC;
 	cuda_force->sum_steps = cpu_force->_sum_steps;
+	cuda_force->buffer_size = cpu_force->_buffer_size;
 
 	if(first_time) {
-		// Allocate GPU memory for buffers
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * 100000));
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * 100000));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * cpu_force->_buffer_size));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * cpu_force->_buffer_size));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<bool>(&cuda_force->saved_last_step, sizeof(bool)));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<llint>(&cuda_force->last_step, sizeof(llint)));
 
 		cpu_force->cuda_force = cuda_force;
 
-		// Initialize values
 		bool saved_init = cpu_force->saved_last_step;
 		llint last_init = cpu_force->last_step;
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->saved_last_step, &saved_init, sizeof(bool), cudaMemcpyHostToDevice));
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->last_step, &last_init, sizeof(llint), cudaMemcpyHostToDevice));
-		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->force_buffer, cpu_force->_force_buffer, sizeof(c_number) * 100000, cudaMemcpyHostToDevice));
-		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->extension_buffer, cpu_force->_extension_buffer, sizeof(c_number) * 100000, cudaMemcpyHostToDevice));
 	} else {
-		// Update values
 		bool saved_val = cpu_force->saved_last_step;
 		llint last_val = cpu_force->last_step;
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->saved_last_step, &saved_val, sizeof(bool), cudaMemcpyHostToDevice));
@@ -748,6 +740,7 @@ struct crooks_COM_force {
 	int *ref_indexes;
 	c_number *force_buffer;
 	c_number *extension_buffer;
+	int buffer_size;
 	int sum_steps;
 	bool *saved_last_step;
 	llint *last_step;
@@ -761,6 +754,7 @@ void init_crooks_COMForce_from_CPU(crooks_COM_force *cuda_force, CrooksCOMForce 
 	cuda_force->n_com = cpu_force->_com_list.size();
 	cuda_force->n_ref = cpu_force->_ref_list.size();
 	cuda_force->sum_steps = cpu_force->_sum_steps;
+	cuda_force->buffer_size = cpu_force->_buffer_size;
 
 	std::vector<int> local_com_indexes;
 	for(auto particle : cpu_force->_com_list) {
@@ -773,15 +767,13 @@ void init_crooks_COMForce_from_CPU(crooks_COM_force *cuda_force, CrooksCOMForce 
 	}
 
 	if(first_time) {
-		// Allocate GPU memory for buffers
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * 100000));
-		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * 100000));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->force_buffer, sizeof(c_number) * cpu_force->_buffer_size));
+		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<c_number>(&cuda_force->extension_buffer, sizeof(c_number) * cpu_force->_buffer_size));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<bool>(&cuda_force->saved_last_step, sizeof(bool)));
 		CUDA_SAFE_CALL(GpuUtils::LR_cudaMalloc<llint>(&cuda_force->last_step, sizeof(llint)));
 
 		cpu_force->cuda_force = cuda_force;
 
-		// Initialize values
 		bool saved_init = cpu_force->saved_last_step;
 		llint last_init = cpu_force->last_step;
 		CUDA_SAFE_CALL(cudaMemcpy(cuda_force->saved_last_step, &saved_init, sizeof(bool), cudaMemcpyHostToDevice));

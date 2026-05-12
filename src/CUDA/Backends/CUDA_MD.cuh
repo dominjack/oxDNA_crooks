@@ -451,7 +451,7 @@ __global__ void set_external_forces(c_number4 *poss, GPU_quat *orientations, CUD
 				F.y += force.y;
 				F.z += force.z;
 
-				int buffer_idx = step % 100000;
+				int buffer_idx = step % extF.movingcrookscomforce.buffer_size;
 
 				extF.movingcrookscomforce.force_buffer[buffer_idx] = (extF.movingcrookscomforce.dir.x*force.x + extF.movingcrookscomforce.dir.y*force.y + extF.movingcrookscomforce.dir.z*force.z)/dr_abs;
 				extF.movingcrookscomforce.extension_buffer[buffer_idx] = extF.movingcrookscomforce.rate * step;
@@ -572,7 +572,7 @@ __global__ void set_external_forces(c_number4 *poss, GPU_quat *orientations, CUD
 				F.z += fz;
 
 				// Store data for Crooks analysis (GPU-side, efficient)
-				int buffer_idx = step % 100000;
+				int buffer_idx = step % extF.movingcrookstrap.buffer_size;
 				c_number force_component = fx * extF.movingcrookstrap.dir.x + fy * extF.movingcrookstrap.dir.y + fz * extF.movingcrookstrap.dir.z;
 				c_number dir_magnitude = sqrtf(extF.movingcrookstrap.dir.x * extF.movingcrookstrap.dir.x + 
 				                              extF.movingcrookstrap.dir.y * extF.movingcrookstrap.dir.y + 
@@ -597,7 +597,7 @@ __global__ void set_external_forces(c_number4 *poss, GPU_quat *orientations, CUD
 				F.z += force.z;
 
 				// Store data for Crooks analysis (GPU-side, efficient)
-				int buffer_idx = step % 100000;
+				int buffer_idx = step % extF.mutualcrookstrap.buffer_size;
 				c_number magnitude = sqrtf(force.x * force.x + 
 				                              force.y * force.y + 
 				                              force.z * force.z);
@@ -631,7 +631,7 @@ __global__ void set_external_forces(c_number4 *poss, GPU_quat *orientations, CUD
 				F.y += force.y;
 				F.z += force.z;
 
-				int buffer_idx = step % 100000;
+				int buffer_idx = step % extF.crookscomforce.buffer_size;
 				c_number magnitude = sqrtf(force.x * force.x + 
 				                              force.y * force.y + 
 				                              force.z * force.z);

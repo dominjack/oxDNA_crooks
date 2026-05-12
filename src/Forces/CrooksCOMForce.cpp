@@ -18,27 +18,6 @@ using namespace std;
 
 #include <fstream>   // For std::ofstream
 
-void appendBufferToFile_COMForce(const std::string& filename, number* force_buffer, number* extension_buffer, int step) {
-    std::ofstream outputFile(filename, std::ios::app);
-
-    if (outputFile.is_open()) {
-        number _running_force = 0.;
-        number _running_extension = 0.;
-        for (int i = 0; i < 100000; i++) {
-            _running_force += force_buffer[i];
-            _running_extension += extension_buffer[i];
-            if ((i+1) % (step) == 0){
-                outputFile << setprecision(12) << _running_force / step << " " << _running_extension / step << " " << step << std::endl;
-                _running_force = 0.;
-                _running_extension = 0.;
-            } 
-        }
-        outputFile.close();
-    } else {
-        std::cerr << "Error: Unable to open file '" << filename << "' for appending." << std::endl;
-    }
-}
-
 
 CrooksCOMForce::CrooksCOMForce() {
 	_rate = 0;
@@ -57,8 +36,12 @@ std::tuple<std::vector<int>, std::string> CrooksCOMForce::init(input_file &inp) 
 	getInputNumber(&inp, "r0", &_r0, 1);
 	getInputNumber(&inp, "rate", &_rate, 0);
     getInputString(&inp, "file_path", _file_path, 1);
-    _sum_steps = 1; //default stiff_rate is 0
+    _sum_steps = 1;
     getInputInt(&inp, "sum_steps", &_sum_steps, 0);
+    _buffer_size = 100000;
+    getInputInt(&inp, "buffer_size", &_buffer_size, 0);
+    _force_buffer.assign(_buffer_size, 0.f);
+    _extension_buffer.assign(_buffer_size, 0.f);
 
 	auto com_indexes = Utils::get_particles_from_string(CONFIG_INFO->particles(), _com_string, "CrooksCOMForce");
 	for(auto it = com_indexes.begin(); it != com_indexes.end(); it++) {
@@ -97,8 +80,8 @@ LR_vector CrooksCOMForce::value(llint step, LR_vector &pos) {
 	number d_com = dist.module();
 	number force = (d_com - (_r0 + _rate * step)) * _stiff / _com_list.size();
 
-    _force_buffer[step%100000] = force;
-    _extension_buffer[step%100000] = (_rate * step);
+    _force_buffer[step % _buffer_size] = (float) force;
+    _extension_buffer[step % _buffer_size] = (float) (_rate * step);
 
 	return dist * (force / d_com);
 }

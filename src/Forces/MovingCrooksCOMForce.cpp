@@ -34,8 +34,12 @@ std::tuple<std::vector<int>, std::string> MovingCrooksCOMForce::init(input_file 
 	getInputNumber(&inp, "rate", &_rate, 0);
 
 	getInputString(&inp, "file_path", _file_path, 1);
-    _sum_steps = 1; //default stiff_rate is 0
+    _sum_steps = 1;
     getInputInt(&inp, "sum_steps", &_sum_steps, 0);
+    _buffer_size = 100000;
+    getInputInt(&inp, "buffer_size", &_buffer_size, 0);
+    _force_buffer.assign(_buffer_size, 0.f);
+    _extension_buffer.assign(_buffer_size, 0.f);
 
 	int tmpi;
 	double tmpf[3];
@@ -95,8 +99,8 @@ LR_vector MovingCrooksCOMForce::value(llint step, LR_vector &pos) {
 	number d_com = dist.module();
 	number force = d_com * _stiff / _com_list.size();
 
-	_force_buffer[step%100000] = force;
-    _extension_buffer[step%100000] = (_rate * step);
+	_force_buffer[step % _buffer_size] = (float) force;
+    _extension_buffer[step % _buffer_size] = (float) (_rate * step);
 
 	return dist * (force / d_com);
 }

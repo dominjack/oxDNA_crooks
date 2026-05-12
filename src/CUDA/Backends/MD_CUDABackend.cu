@@ -789,14 +789,10 @@ void MD_CUDABackend::init() {
 }
 
 void MD_CUDABackend::_sync_crooks_data() {
-    // If no Crooks forces are registered, exit immediately (O(1) cost)
     if (_crooks_forces_registry.empty()) return;
 
     llint current = current_step();
-    const int buffer_size = 100000;
-    
-    // Check timing once at the top
-    if (current <= 1 || current % buffer_size > 1) return;
+    if (current <= 1) return;
 
     for (BaseForce* force_ptr : _crooks_forces_registry) {
         // We use dynamic_cast to identify the class and access its buffers

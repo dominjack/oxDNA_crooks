@@ -445,6 +445,7 @@ __global__ void set_external_forces(c_number4 *poss, GPU_quat *orientations, CUD
 				dr.y *= extF.movingcrookscomforce.force_multiplication_vector.y;
 				dr.z *= extF.movingcrookscomforce.force_multiplication_vector.z;
 				c_number dr_abs = _module(dr);
+				c_number dir_abs = _module(extF.movingcrookscomforce.dir);
 				c_number4 force = dr * extF.movingcrookscomforce.stiff / extF.movingcrookscomforce.n_com;
 
 				F.x += force.x;
@@ -453,7 +454,7 @@ __global__ void set_external_forces(c_number4 *poss, GPU_quat *orientations, CUD
 
 				int buffer_idx = step % extF.movingcrookscomforce.buffer_size;
 
-				extF.movingcrookscomforce.force_buffer[buffer_idx] = (extF.movingcrookscomforce.dir.x*force.x + extF.movingcrookscomforce.dir.y*force.y + extF.movingcrookscomforce.dir.z*force.z)/dr_abs;
+				extF.movingcrookscomforce.force_buffer[buffer_idx] = (extF.movingcrookscomforce.dir.x*force.x + extF.movingcrookscomforce.dir.y*force.y + extF.movingcrookscomforce.dir.z*force.z)/dir_abs;
 				extF.movingcrookscomforce.extension_buffer[buffer_idx] = extF.movingcrookscomforce.rate * step;
 
 				break;

@@ -99,7 +99,7 @@ LR_vector MovingCrooksCOMForce::value(llint step, LR_vector &pos) {
 	number d_com = dist.module();
 	number force = d_com * _stiff / _com_list.size();
 
-	_force_buffer[step % _buffer_size] = (float) force;
+	_force_buffer[step % _buffer_size] = (float) ((dist * (_stiff / _com_list.size()))*_direction) / _direction.module();
     _extension_buffer[step % _buffer_size] = (float) (_rate * step);
 
 	return dist * (force / d_com);
